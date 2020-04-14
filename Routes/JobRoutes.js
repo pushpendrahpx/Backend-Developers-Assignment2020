@@ -40,7 +40,7 @@ router.get('/search/:id',MiddleWare,(req,res)=>{
         JobModel.findById(id,(err,Job)=>{
             if(err){
                 res.status(400).json({error:"Some Error "})
-            }
+            }else
             if(Job){
                 client.setex(JSON.stringify(id),3000,JSON.stringify(Job));
                 res.status(200).json(Job);
