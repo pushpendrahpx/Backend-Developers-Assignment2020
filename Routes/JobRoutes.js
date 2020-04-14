@@ -1,8 +1,55 @@
 const router = require("express").Router();
 
-router.get('/search/:query',(req,res)=>{
-    let {query} = req.params;
-    console.log(query)
+const {redis} = require("./../imports");
+const client = redis.createClient();
+
+client.on("error", function(error) {
+    console.error(error);
+});
+
+const MiddleWare = (req,res,next)=>{
+
+    
+    let {id} = req.params;
+    // console.log(id)
+
+
+    // client.set(id, "value", redis.print);
+    client.get(JSON.stringify(id),(err,data)=>{
+        if(err){
+            res.status(400).json({
+                error:"Some Error"
+            })
+        }
+        if(data){
+            res.status(200).json(JSON.parse(data))
+        }else{
+            next();
+        }
+    });
+
+}
+
+router.get('/search/:id',MiddleWare,(req,res)=>{
+   
+    try{
+        console.log("Cached May be missed")
+        const { id } = req.params;
+
+        const {JobModel} = require("./../Models/User");
+        JobModel.findById(id,(err,Job)=>{
+            client.setex(JSON.stringify(id),3000,JSON.stringify(Job));
+
+            res.status(200).json(Job);
+        })
+
+    }catch(e){
+        res.status(400).json({
+            message:"Some Internal ID"
+        })
+    }
+
+    
 })
 router.post('/post',(req,res)=>{
     try{
@@ -22,10 +69,14 @@ router.post('/post',(req,res)=>{
         })
         newJob.save((err,docs)=>{
             if(!err)
-        res.status(200).json({
-            status:"Saved",
-            updated:docs
-        })
+            {   
+                console.log(newJob._id)
+                client.setex(JSON.stringify(newJob._id),3000,JSON.stringify(newJob))
+                res.status(200).json({
+                    status:"Saved",
+                    updated:docs
+                })
+            }
         })
     }catch(error){
         res.status(400).json({
@@ -34,9 +85,9 @@ router.post('/post',(req,res)=>{
         })
     }
 });
-router.put('/update/:PostID/sallary/',(req,res)=>{
+router.put('/update',(req,res)=>{
     try{
-        let {postId} = req.params;
+        let {postId} = req.body;
 
         let {sallary} = req.body;
 
@@ -48,8 +99,12 @@ router.put('/update/:PostID/sallary/',(req,res)=>{
                 message:"Failed to update Sallary"
             })
             else{
+
+                client.setex(JSON.stringify(docs._id),3000,JSON.stringify(_id));
+                
                 res.status(200).json({
-                    message:"Post SavedS"
+                    message:"Post SavedS",
+                    docs
                 })
                
             }
@@ -61,4 +116,43 @@ router.put('/update/:PostID/sallary/',(req,res)=>{
         })
     }
 })
+
+router.delete('/delete/:id',(req,res)=>{
+    try{
+        
+        let {id} = req.params;
+        console.log(id)
+        const { JobModel } = require("./../Models/User");
+        JobModel.deleteOne({_id:id},(err)=>{
+            if(err){
+                throw "Failed to delete"
+            }else{
+
+                client.get(id,(err,value)=>{
+                    if(err){
+                        console.log("Some Cache Error")
+                    }else{
+                        client.del(JSON.stringify(id),(err,v2)=>{
+                            if(err)
+                                console.log("Some Cache Error v2")
+                            else console.log("Deleted from Cache Also")
+                        })
+                    }
+
+                    
+                })
+                res.status(200).json({
+                    message:"Job Post Deleted"
+                })
+            }
+        })
+        
+
+    }catch(error){
+        res.status(400).json({
+            message:"Some Error There"
+        })
+    }
+});
+
 module.exports = router;
