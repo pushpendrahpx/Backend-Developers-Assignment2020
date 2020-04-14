@@ -20,7 +20,7 @@ const MiddleWare = (req,res,next)=>{
             res.status(400).json({
                 error:"Some Error"
             })
-        }
+        }else
         if(data){
             res.status(200).json(JSON.parse(data))
         }else{
@@ -38,9 +38,17 @@ router.get('/search/:id',MiddleWare,(req,res)=>{
 
         const {JobModel} = require("./../Models/User");
         JobModel.findById(id,(err,Job)=>{
-            client.setex(JSON.stringify(id),3000,JSON.stringify(Job));
-
-            res.status(200).json(Job);
+            if(err){
+                res.status(400).json({error:"Some Error "})
+            }
+            if(Job){
+                client.setex(JSON.stringify(id),3000,JSON.stringify(Job));
+                res.status(200).json(Job);
+            }else{
+                res.status(200).json({
+                    error:"Job Doesnot exist"
+                })
+            }
         })
 
     }catch(e){
@@ -51,7 +59,7 @@ router.get('/search/:id',MiddleWare,(req,res)=>{
 
     
 })
-router.post('/post',(req,res)=>{
+router.post('/create',(req,res)=>{
     try{
         let {
             work,
@@ -74,7 +82,8 @@ router.post('/post',(req,res)=>{
                 client.setex(JSON.stringify(newJob._id),3000,JSON.stringify(newJob))
                 res.status(200).json({
                     status:"Saved",
-                    updated:docs
+                    updated:docs,
+                    id:docs._id
                 })
             }
         })
@@ -101,7 +110,7 @@ router.put('/update',(req,res)=>{
             else{
 
                 client.setex(JSON.stringify(docs._id),3000,JSON.stringify(_id));
-                
+
                 res.status(200).json({
                     message:"Post SavedS",
                     docs
@@ -154,5 +163,18 @@ router.delete('/delete/:id',(req,res)=>{
         })
     }
 });
+
+router.post('/getResultsWithPendingStatusJobs',(req,res)=>{
+    console.log("GEt")
+    let { JobModel } = require("./../Models/User");
+
+    JobModel.find({},(err,allDocs)=>{
+        if(err){
+            res.status(400).json({error:"Some Error"})
+        }else{
+            res.status(200).json(allDocs)
+        }
+    })
+})
 
 module.exports = router;

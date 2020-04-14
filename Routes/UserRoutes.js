@@ -7,153 +7,43 @@ client.on("error", function(error) {
     console.error(error);
 });
 
-const MiddleWare = (req,res,next)=>{
-
-    
-    let {id} = req.params;
-    // console.log(id)
-
-
-    // client.set(id, "value", redis.print);
-    client.get(JSON.stringify(id),(err,data)=>{
-        if(err){
-            res.status(400).json({
-                error:"Some Error"
-            })
-        }
-        if(data){
-            res.status(200).json(JSON.parse(data))
-        }else{
-            next();
-        }
-    });
-
-}
-
-router.get('/search/:id',MiddleWare,(req,res)=>{
-   
-    try{
-        console.log("Cached May be missed")
-        const { id } = req.params;
-
-        const {UserModel} = require("./../Models/User");
-        UserModel.findById(id,(err,Job)=>{
-            client.setex(JSON.stringify(id),3000,JSON.stringify(Job));
-
-            res.status(200).json(Job);
-        })
-
-    }catch(e){
-        res.status(400).json({
-            message:"Some Internal ID"
-        })
-    }
-
-    
-})
-router.post('/create',(req,res)=>{
+router.post('/submit',(req,res)=>{
     try{
         let {
             name,
             email,
             phone,
-            password
+            password,
         } = req.body;
-
-        const { JobModel } = require("./../Models/User");
-        let newJob = new JobModel({
-            work:work,
-            position:position,
-            postedDate:new Date(),
-            isOpen:true,
-            sallary:sallary
+        console.log(name)
+        const { UserModel } = require("./../Models/User");
+        let User = new UserModel({
+            name:name,
+            email:email,
+            phone:phone,
+            password:password
         })
-        newJob.save((err,docs)=>{
+        console.log(User)
+        User.save((err,docs)=>{
             if(!err)
             {   
-                console.log(newJob._id)
-                client.setex(JSON.stringify(newJob._id),3000,JSON.stringify(newJob))
+                console.log(User._id)
+                client.setex(JSON.stringify(User._id),3000,JSON.stringify(User))
+                client.setex("LastUserRegistered",5000,JSON.stringify(User));
+
+
                 res.status(200).json({
-                    status:"Saved",
-                    updated:docs
+                    id:docs._id
                 })
-            }
-        })
-    }catch(error){
-        res.status(400).json({
-            error:error,
-            message:"Some Error There"
-        })
-    }
-});
-router.put('/update',(req,res)=>{
-    try{
-        let {postId} = req.body;
-
-        let {sallary} = req.body;
-
-        const { JobModel } = require("./../Models/User");
-        console.log(sallary)
-        JobModel.updateOne({_id:postId},{sallary:sallary},(err,docs)=>{
-            if(err)
-            res.status(400).json({
-                message:"Failed to update Sallary"
-            })
-            else{
-
-                client.setex(JSON.stringify(docs._id),3000,JSON.stringify(_id));
-                
-                res.status(200).json({
-                    message:"Post SavedS",
-                    docs
-                })
-               
-            }
-        })
-
-    }catch(error){
-        res.status(400).json({
-            message:"Some Error There"
-        })
-    }
-})
-
-router.delete('/delete/:id',(req,res)=>{
-    try{
-        
-        let {id} = req.params;
-        console.log(id)
-        const { JobModel } = require("./../Models/User");
-        JobModel.deleteOne({_id:id},(err)=>{
-            if(err){
-                throw "Failed to delete"
             }else{
 
-                client.get(id,(err,value)=>{
-                    if(err){
-                        console.log("Some Cache Error")
-                    }else{
-                        client.del(JSON.stringify(id),(err,v2)=>{
-                            if(err)
-                                console.log("Some Cache Error v2")
-                            else console.log("Deleted from Cache Also")
-                        })
-                    }
-
-                    
-                })
-                res.status(200).json({
-                    message:"Job Post Deleted"
-                })
+                res.status(400).json({s:"S"})
             }
         })
-        
-
     }catch(error){
         res.status(400).json({
             message:"Some Error There"
         })
     }
 });
-
 module.exports = router;
