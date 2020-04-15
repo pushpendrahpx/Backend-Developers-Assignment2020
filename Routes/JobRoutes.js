@@ -43,6 +43,7 @@ router.get('/search/:id',MiddleWare,(req,res)=>{
             }else
             if(Job){
                 client.setex(JSON.stringify(id),3000,JSON.stringify(Job));
+                console.log("=================================================================================")
                 res.status(200).json(Job);
             }else{
                 res.status(200).json({
