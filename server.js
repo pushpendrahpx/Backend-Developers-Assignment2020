@@ -13,7 +13,7 @@ const SwaggerOptions = {
     swaggerDefinition:{
         info:{
             title: 'Backend APIs Documentation',
-            description: '... Describes APIs Uses',
+            description: 'Our Redis Server Doesnot works as it requires Payment Access, So Try to Run our Git Repository on your Local Computer with Redis Server',
             contact:{
                 name:"Pushpendra Vishwakarma"
             },
