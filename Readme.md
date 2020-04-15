@@ -6,6 +6,7 @@
 ## Our Same Backend Application is hosted on Heroku app
 - API requests are Accepted at this Site [https://backendassign.herokuapp.com/](https://backendassign.herokuapp.com/)
 - To See API Docs For This Backend Codes [Click Here](https://backendassign.herokuapp.com/api-docs/)
+``` As Heroku requires Premium Services We Recommend you to Download Redis-Server in Your Computer and test Our Server at Local only```
 
 ### Installation and Runnning our Service
 
